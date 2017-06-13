@@ -1,4 +1,4 @@
-# forklift
+# Forklift
 Allows sql file embedding into a Go binary.
 
 # Overview
