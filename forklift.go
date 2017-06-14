@@ -38,7 +38,7 @@ func main() {
 	}
 
 	filepath.Walk(*dir, func(path string, info os.FileInfo, err error) error {
-		if !strings.HasSuffix(path, ".sql") {
+		if !(strings.HasSuffix(path, ".static.sql") || strings.HasSuffix(path, ".tmpl.sql") || strings.HasSuffix(path, ".lazy.sql")) {
 			return nil
 		}
 		if info != nil && info.IsDir() {
