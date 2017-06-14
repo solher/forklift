@@ -11,7 +11,7 @@ The utility `forklift` generates Go code from sql files and embbed them into the
 # Install
 To install Forklift:
 
-`go get -u github.com/solher/forklift`
+`go get -u github.com/solher/forklift` 
 
 # Basic Usage
 A `query.sql` file Located in the same directory that the main.go file:
