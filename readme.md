@@ -14,7 +14,7 @@ To install Forklift:
 `go get -u github.com/solher/forklift` 
 
 # Basic Usage
-A `query.sql` file Located in the same directory that the main.go file:
+A `query.static.sql` file Located in the same directory that the main.go file (only `.static.sql`, `.tmpl.sql` and `.lazy.sql` files are saved so it can ignore migration/fixture files):
 
 ```sql
 SELECT * FROM documents

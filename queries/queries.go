@@ -1,6 +1,7 @@
 package queries
 
 import (
+	"bytes"
 	"fmt"
 	"html/template"
 	"io/ioutil"
@@ -21,8 +22,8 @@ func File(path string) string {
 }
 
 // Template reads the given sql file located relatively to the caller and parses it.
-func Template(path string) *template.Template {
-	return AbsTemplate(absFromCaller(path))
+func Template(path string, data interface{}) string {
+	return AbsTemplate(absFromCaller(path), data)
 }
 
 // AbsFile reads the sql file located at the given absolute path.
@@ -38,9 +39,11 @@ func AbsFile(path string) string {
 }
 
 // AbsTemplate reads the sql file located at the given absolute path and parses it.
-func AbsTemplate(path string) *template.Template {
+func AbsTemplate(path string, data interface{}) string {
+	output := bytes.NewBuffer(nil)
 	if q, ok := queries[path]; ok {
-		return q.template
+		q.template.Execute(output, data)
+		return output.String()
 	}
 	query, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -50,7 +53,8 @@ func AbsTemplate(path string) *template.Template {
 	if err != nil {
 		panic(err)
 	}
-	return tmpl
+	tmpl.Execute(output, data)
+	return output.String()
 }
 
 // Add adds a new sql file to the cache and tries to parse it.
