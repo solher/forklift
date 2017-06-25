@@ -15,8 +15,8 @@ const tmplStr = `package {{.Package}}
 import "github.com/solher/forklift/queries"
 
 func init() {
-{{range $path, $query := .Queries}}queries.Add("{{$path}}", {{$query}})
-{{end}}
+{{range $path, $query := .Queries }}  queries.Add("{{$path}}", {{$query}})
+{{end -}}
 }
 `
 
