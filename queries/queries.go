@@ -3,10 +3,10 @@ package queries
 import (
 	"bytes"
 	"fmt"
-	"html/template"
 	"io/ioutil"
 	"path/filepath"
 	"runtime"
+	"text/template"
 )
 
 type parsedQuery struct {
