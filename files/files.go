@@ -1,4 +1,4 @@
-package queries
+package files
 
 import (
 	"bytes"
@@ -9,47 +9,47 @@ import (
 	"text/template"
 )
 
-type parsedQuery struct {
-	query    string
+type parsedFile struct {
+	file     string
 	template *template.Template
 }
 
-var queries = map[string]*parsedQuery{}
+var files = map[string]*parsedFile{}
 
-// File reads the given sql file located relatively to the caller.
+// File reads the given file located relatively to the caller.
 func File(path string) string {
 	return AbsFile(absFromCaller(path))
 }
 
-// Template reads the given sql file located relatively to the caller and parses it.
+// Template reads the given file located relatively to the caller and parses it.
 func Template(path string, data interface{}) string {
 	return AbsTemplate(absFromCaller(path), data)
 }
 
-// AbsFile reads the sql file located at the given absolute path.
+// AbsFile reads the file located at the given absolute path.
 func AbsFile(path string) string {
-	if q, ok := queries[path]; ok {
-		return q.query
+	if q, ok := files[path]; ok {
+		return q.file
 	}
-	query, err := ioutil.ReadFile(path)
+	file, err := ioutil.ReadFile(path)
 	if err != nil {
 		panic(err)
 	}
-	return string(query)
+	return string(file)
 }
 
-// AbsTemplate reads the sql file located at the given absolute path and parses it.
+// AbsTemplate reads the file located at the given absolute path and parses it.
 func AbsTemplate(path string, data interface{}) string {
 	output := bytes.NewBuffer(nil)
-	if q, ok := queries[path]; ok {
+	if q, ok := files[path]; ok {
 		q.template.Execute(output, data)
 		return output.String()
 	}
-	query, err := ioutil.ReadFile(path)
+	file, err := ioutil.ReadFile(path)
 	if err != nil {
 		panic(err)
 	}
-	tmpl, err := template.New(path).Parse(string(query))
+	tmpl, err := template.New(path).Parse(string(file))
 	if err != nil {
 		panic(err)
 	}
@@ -57,11 +57,11 @@ func AbsTemplate(path string, data interface{}) string {
 	return output.String()
 }
 
-// Add adds a new sql file to the cache and tries to parse it.
-func Add(path string, query string) {
-	queries[path] = &parsedQuery{
-		query:    query,
-		template: template.Must(template.New(path).Parse(query)),
+// Add adds a new file to the cache and tries to parse it.
+func Add(path string, file string) {
+	files[path] = &parsedFile{
+		file:     file,
+		template: template.Must(template.New(path).Parse(file)),
 	}
 }
 

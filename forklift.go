@@ -12,10 +12,10 @@ import (
 
 const tmplStr = `package {{.Package}}
 
-import "github.com/solher/forklift/queries"
+import "github.com/solher/forklift/files"
 
 func init() {
-{{range $path, $query := .Queries }}  queries.Add("{{$path}}", {{$query}})
+{{range $path, $file := .Files }}  files.Add("{{$path}}", {{$file}})
 {{end -}}
 }
 `
@@ -23,23 +23,34 @@ func init() {
 var tmpl = template.Must(template.New("forklift").Parse(tmplStr))
 
 type forklift struct {
-	Package string
-	Queries map[string]string
+	Package    string
+	Files      map[string]string
+	Extensions []string
 }
 
 func main() {
-	pkg := flag.String("package", "main", "package where the query file is to be written")
-	dir := flag.String("directory", "./", "the root directory where to look for sql files")
+	pkg := flag.String("package", "main", "package where the forklift file is to be written")
+	dir := flag.String("directory", "./", "the root directory where to look for files")
+	extensions := flag.String("extensions", "", "a comma separated list of extensions to load")
 	flag.Parse()
 
 	f := &forklift{
-		Package: *pkg,
-		Queries: map[string]string{},
+		Package:    *pkg,
+		Files:      map[string]string{},
+		Extensions: []string{},
+	}
+
+	for _, extension := range strings.Split(*extensions, ",") {
+		f.Extensions = append(f.Extensions, strings.TrimSpace(extension))
 	}
 
 	filepath.Walk(*dir, func(path string, info os.FileInfo, err error) error {
-		if !(strings.HasSuffix(path, ".static.sql") || strings.HasSuffix(path, ".tmpl.sql") || strings.HasSuffix(path, ".lazy.sql")) {
-			return nil
+		if len(f.Extensions) > 0 {
+			for _, extension := range f.Extensions {
+				if !strings.HasSuffix(path, extension) {
+					return nil
+				}
+			}
 		}
 		if info != nil && info.IsDir() {
 			return nil
@@ -48,11 +59,11 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		query, err := ioutil.ReadFile(abs)
+		file, err := ioutil.ReadFile(abs)
 		if err != nil {
 			panic(err)
 		}
-		f.Queries[abs] = fmt.Sprintf("%q", query)
+		f.Files[abs] = fmt.Sprintf("%q", file)
 		return nil
 	})
 
