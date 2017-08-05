@@ -37,7 +37,7 @@ func main() {
 By default (development), the file will actually be read from the disk. In production, you can embbed the files into the binary by running the command:
 
 ```bash
-$ forklift > forklift.go
+$ forklift -extensions sql,gql > forklift.go
 ```
 
 The files with then be read from memory.

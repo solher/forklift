@@ -46,10 +46,14 @@ func main() {
 
 	filepath.Walk(*dir, func(path string, info os.FileInfo, err error) error {
 		if len(f.Extensions) > 0 {
+			found := false
 			for _, extension := range f.Extensions {
-				if !strings.HasSuffix(path, extension) {
-					return nil
+				if strings.HasSuffix(path, extension) {
+					found = true
 				}
+			}
+			if !found {
+				return nil
 			}
 		}
 		if info != nil && info.IsDir() {
