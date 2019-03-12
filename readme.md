@@ -14,7 +14,7 @@ To install Forklift:
 `go get -u github.com/solher/forklift` 
 
 # Basic Usage
-A `file.sql` file Located in the same directory that the main.go file:
+A `file.sql` file located (for example) in the same directory as the main.go file:
 
 ```sql
 SELECT * FROM documents
