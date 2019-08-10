@@ -2,6 +2,8 @@ package files
 
 import (
 	"bytes"
+	"compress/gzip"
+	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -58,10 +60,24 @@ func AbsTemplate(path string, data interface{}) string {
 }
 
 // Add adds a new file to the cache and tries to parse it.
-func Add(path string, file string) {
+// The file is expected to be gzipped then base64 encoded.
+func Add(path string, base64File string) {
+	decodedFile, err := base64.StdEncoding.DecodeString(base64File)
+	if err != nil {
+		panic(err)
+	}
+	gz, err := gzip.NewReader(bytes.NewBuffer(decodedFile))
+	if err != nil {
+		panic(err)
+	}
+	defer gz.Close()
+	clearFile, err := ioutil.ReadAll(gz)
+	if err != nil {
+		panic(err)
+	}
 	files[path] = &parsedFile{
-		file:     file,
-		template: template.Must(template.New(path).Parse(file)),
+		file:     string(clearFile),
+		template: template.Must(template.New(path).Parse(string(clearFile))),
 	}
 }
 

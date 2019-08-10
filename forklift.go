@@ -1,6 +1,9 @@
 package main
 
 import (
+	"bytes"
+	"compress/gzip"
+	"encoding/base64"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -50,6 +53,7 @@ func main() {
 			for _, extension := range f.Extensions {
 				if strings.HasSuffix(path, extension) {
 					found = true
+					break
 				}
 			}
 			if !found {
@@ -67,7 +71,18 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		f.Files[abs] = fmt.Sprintf("%q", file)
+		gzFile := bytes.Buffer{}
+		gz := gzip.NewWriter(&gzFile)
+		if _, err := gz.Write([]byte(file)); err != nil {
+			panic(err)
+		}
+		if err := gz.Flush(); err != nil {
+			panic(err)
+		}
+		if err := gz.Close(); err != nil {
+			panic(err)
+		}
+		f.Files[abs] = fmt.Sprintf("%q", base64.StdEncoding.EncodeToString(gzFile.Bytes()))
 		return nil
 	})
 
