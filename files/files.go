@@ -62,22 +62,23 @@ func AbsTemplate(path string, data interface{}) string {
 // Add adds a new file to the cache and tries to parse it.
 // The file is expected to be gzipped then base64 encoded.
 func Add(path string, base64File string) {
+	clearFile := base64File
 	decodedFile, err := base64.StdEncoding.DecodeString(base64File)
-	if err != nil {
-		panic(err)
-	}
-	gz, err := gzip.NewReader(bytes.NewBuffer(decodedFile))
-	if err != nil {
-		panic(err)
-	}
-	defer gz.Close()
-	clearFile, err := ioutil.ReadAll(gz)
-	if err != nil {
-		panic(err)
+	if err == nil {
+		gz, err := gzip.NewReader(bytes.NewBuffer(decodedFile))
+		if err != nil {
+			panic(err)
+		}
+		defer gz.Close()
+		unzippedFile, err := ioutil.ReadAll(gz)
+		if err != nil {
+			panic(err)
+		}
+		clearFile = string(unzippedFile)
 	}
 	files[path] = &parsedFile{
-		file:     string(clearFile),
-		template: template.Must(template.New(path).Parse(string(clearFile))),
+		file:     clearFile,
+		template: template.Must(template.New(path).Parse(clearFile)),
 	}
 }
 
