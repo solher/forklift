@@ -40,4 +40,4 @@ By default (development), the file will actually be read from the disk. In produ
 $ forklift -extensions sql,gql > forklift.go
 ```
 
-The files with then be read from memory.
+The files will then be read from memory.
