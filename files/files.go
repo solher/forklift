@@ -5,18 +5,16 @@ import (
 	"compress/gzip"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
+	"io"
+	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"text/template"
 )
 
-type parsedFile struct {
-	file     string
-	template *template.Template
-}
-
-var files = map[string]*parsedFile{}
+var files = map[string]string{}
+var templates = template.New("root")
 
 // File reads the given file located relatively to the caller.
 func File(path string) string {
@@ -30,10 +28,10 @@ func Template(path string, data interface{}) string {
 
 // AbsFile reads the file located at the given absolute path.
 func AbsFile(path string) string {
-	if q, ok := files[path]; ok {
-		return q.file
+	if file, ok := files[path]; ok {
+		return file
 	}
-	file, err := ioutil.ReadFile(path)
+	file, err := os.ReadFile(path)
 	if err != nil {
 		panic(err)
 	}
@@ -43,19 +41,24 @@ func AbsFile(path string) string {
 // AbsTemplate reads the file located at the given absolute path and parses it.
 func AbsTemplate(path string, data interface{}) string {
 	output := bytes.NewBuffer(nil)
-	if q, ok := files[path]; ok {
-		q.template.Execute(output, data)
-		return output.String()
+
+	// Try to use existing template.
+	tmpl := templates.Lookup(path)
+	if tmpl == nil {
+		// If not found, try to read from disk.
+		content, err := os.ReadFile(path)
+		if err != nil {
+			panic(err)
+		}
+
+		// Process includes and parse the template.
+		processedContent := processIncludes(string(content), path)
+		tmpl = template.Must(template.New(path).Parse(processedContent))
 	}
-	file, err := ioutil.ReadFile(path)
-	if err != nil {
+
+	if err := tmpl.Execute(output, data); err != nil {
 		panic(err)
 	}
-	tmpl, err := template.New(path).Parse(string(file))
-	if err != nil {
-		panic(err)
-	}
-	tmpl.Execute(output, data)
 	return output.String()
 }
 
@@ -70,16 +73,21 @@ func Add(path string, base64File string) {
 			panic(err)
 		}
 		defer gz.Close()
-		unzippedFile, err := ioutil.ReadAll(gz)
+		unzippedFile, err := io.ReadAll(gz)
 		if err != nil {
 			panic(err)
 		}
 		clearFile = string(unzippedFile)
 	}
-	files[path] = &parsedFile{
-		file:     clearFile,
-		template: template.Must(template.New(path).Parse(clearFile)),
-	}
+
+	// Process includes.
+	processedContent := processIncludes(clearFile, path)
+
+	// Store the processed file.
+	files[path] = processedContent
+
+	// Add to template set.
+	template.Must(templates.New(path).Parse(processedContent))
 }
 
 func absFromCaller(path string) string {
@@ -92,4 +100,29 @@ func absFromCaller(path string) string {
 		return ""
 	}
 	return fmt.Sprintf("%s/%s", filepath.Dir(abs), path)
+}
+
+// includeRegex is the regex to find {{include "path"}} patterns.
+var includeRegex = regexp.MustCompile(`{{\s*include\s*"([^"]+)"\s*}}`)
+
+// processIncludes replaces all {{include "path"}} directives with the content of the referenced files.
+func processIncludes(content, basePath string) string {
+	return includeRegex.ReplaceAllStringFunc(content, func(match string) string {
+		submatches := includeRegex.FindStringSubmatch(match)
+		if len(submatches) < 2 {
+			return match
+		}
+
+		includePath := submatches[1]
+		if !filepath.IsAbs(includePath) {
+			includePath = filepath.Join(filepath.Dir(basePath), includePath)
+		}
+
+		includeContent, err := os.ReadFile(includePath)
+		if err != nil {
+			panic(fmt.Errorf("failed to read included file %s: %w", includePath, err))
+		}
+
+		return string(includeContent)
+	})
 }
