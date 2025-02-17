@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -67,7 +66,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		file, err := ioutil.ReadFile(abs)
+		file, err := os.ReadFile(abs)
 		if err != nil {
 			panic(err)
 		}
