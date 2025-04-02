@@ -18,7 +18,7 @@ import "github.com/solher/forklift/files"
 
 func init() {
 {{range $path, $file := .Files }}  files.Add("{{$path}}", {{$file}})
-{{end -}}
+{{end}}
   files.LoadAllTemplates()
 }
 `
