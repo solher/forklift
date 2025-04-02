@@ -86,16 +86,21 @@ func Add(path string, base64File string) {
 
 // LoadAllTemplates processes all files and adds them to the template set.
 func LoadAllTemplates() {
+	processedFiles := map[string]string{}
+
 	for path, content := range files {
 		// Process includes.
 		processedContent := processIncludes(content, path)
 
 		// Store the processed file.
-		files[path] = processedContent
+		processedFiles[path] = processedContent
 
 		// Add to template set.
 		template.Must(templates.New(path).Parse(processedContent))
 	}
+
+	// Replace the original files with the processed ones.
+	files = processedFiles
 }
 
 func absFromCaller(path string) string {
