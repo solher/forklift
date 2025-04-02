@@ -80,14 +80,22 @@ func Add(path string, base64File string) {
 		clearFile = string(unzippedFile)
 	}
 
-	// Process includes.
-	processedContent := processIncludes(clearFile, path)
+	// Store the raw file.
+	files[path] = clearFile
+}
 
-	// Store the processed file.
-	files[path] = processedContent
+// LoadAllTemplates processes all files and adds them to the template set.
+func LoadAllTemplates() {
+	for path, content := range files {
+		// Process includes.
+		processedContent := processIncludes(content, path)
 
-	// Add to template set.
-	template.Must(templates.New(path).Parse(processedContent))
+		// Store the processed file.
+		files[path] = processedContent
+
+		// Add to template set.
+		template.Must(templates.New(path).Parse(processedContent))
+	}
 }
 
 func absFromCaller(path string) string {
@@ -118,11 +126,6 @@ func processIncludes(content, basePath string) string {
 			includePath = filepath.Join(filepath.Dir(basePath), includePath)
 		}
 
-		includeContent, err := os.ReadFile(includePath)
-		if err != nil {
-			panic(fmt.Errorf("failed to read included file %s: %w", includePath, err))
-		}
-
-		return string(includeContent)
+		return AbsFile(includePath)
 	})
 }

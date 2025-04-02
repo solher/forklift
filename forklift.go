@@ -19,6 +19,7 @@ import "github.com/solher/forklift/files"
 func init() {
 {{range $path, $file := .Files }}  files.Add("{{$path}}", {{$file}})
 {{end -}}
+  files.LoadAllTemplates()
 }
 `
 
@@ -46,7 +47,7 @@ func main() {
 		f.Extensions = append(f.Extensions, strings.TrimSpace(extension))
 	}
 
-	filepath.Walk(*dir, func(path string, info os.FileInfo, err error) error {
+	filepath.Walk(*dir, func(path string, info os.FileInfo, _ error) error {
 		if len(f.Extensions) > 0 {
 			found := false
 			for _, extension := range f.Extensions {
